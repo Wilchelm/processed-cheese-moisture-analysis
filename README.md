@@ -6,12 +6,12 @@
 
 Choose language / Wybierz język:
 
-* [🇬🇧 English Version](#english-version)
-* [🇵🇱 Wersja Polska](#wersja-polska)
+* [English Version](#english-version)
+* [Wersja Polska](#wersja-polska)
 
 ---
 
-## 🇬🇧 English Version
+## English Version
 
 This project focuses on analyzing the impact of storage time on the moisture content of two types of processed cheeses (Cheese A and Cheese B). The study monitors changes across three stages: **S0** (fresh product), **S3** (week 3), and **S5** (week 5).
 
@@ -54,7 +54,7 @@ Due to a **small sample size ($n=5$)** and the absence of a normal distribution,
 
 *Project completed as part of the "Non-parametric Statistics" course.*
 
-# 🇵🇱 Wersja Polska
+## Wersja Polska
 
 ## Opis Projektu
 
