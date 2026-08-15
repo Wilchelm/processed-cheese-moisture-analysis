@@ -1,0 +1,372 @@
+---
+title: "Analiza zawartości wody w serze A i serze B"
+author: "Wilchelm"
+output:
+  pdf_document: 
+      dev: "cairo_pdf"
+  word_document: default
+  html_document: default
+lang: pl-PL
+---
+
+```{=html}
+<style>
+body {
+text-align: justify}
+</style>
+```
+
+## Wprowadzenie \newline
+
+Badano zawartość wody (w %) w serze topionym dwóch rodzajów, „A” i „B”, w zależności od czasu dojrzewania. Pomiary przeprowadzono w serze świeżym (S0) oraz w trzecim (S3) i piątym tygodniu (S5). \newline
+
+## Cele badawcze: \newline
+
+1.  Czy przechowywanie sera „A” wpływa istotnie na zmniejszenie się w nim zawartości wody?
+2.  Czy przechowywanie sera „B” wpływa istotnie na zmniejszenie się w nim zawartości wody?
+3.  Czy różnica w zawartości wody w terminach S0 i S3 jest istotna statystycznie?
+4.  Czy różnica w zawartości wody w terminach S3 i S5 jest istotna statystycznie?
+5.  Jakiego średniego procentu utraty wody można się spodziewać w terminach S3 i S5?
+6.  Czy istnieją statystycznie istotne różnice w utracie wilgotności pomiędzy serem "A" a serem "B" w analizowanych terminach? \newline
+
+## Przygotowanie Danych \newline
+
+```{r}
+# Przygotowanie danych
+S0_1 <- c(42.3, 42.5, 41.0, 40.8, 42.4)
+S3_1 <- c(38.7, 38.1, 39.3, 37.7, 39.0)
+S5_1 <- c(39.4, 36.5, 36.3, 36.3, 36.6)
+S0_2 <- c(41.4, 40.1, 41.5, 41.6, 39.9)
+S3_2 <- c(39.9, 38.2, 37.7, 37.9, 37.2)	
+S5_2 <- c(38.2, 37.4, 35.1, 35.2, 34.5)
+
+# Tworzenie ram danych
+ser_A <- data.frame(S0=S0_1, S3=S3_1, S5=S5_1)
+ser_B <- data.frame(S0=S0_2, S3=S3_2, S5=S5_2)
+```
+
+\newpage
+
+## Wyświetlenie Danych i Statystyki Opisowe \newline
+
+```{r}
+# Wyświetlenie Ser A
+ser_A
+
+# Wyświetlenie Ser B
+ser_B
+
+# Statystyki podsumowujące
+summary(ser_A)
+summary(ser_B)
+```
+
+\newpage
+
+## Graficzne Przedstawienie Danych \newline
+
+### Wykres Pudełkowy \newline
+
+```{r boxplot_generation, message=FALSE, warning=FALSE}
+# Ładowanie niezbędnych bibliotek
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+
+# Przekształcenie danych do ggplot
+ser_A_melted <- melt(ser_A, variable.name = "Tydzień", value.name = "Zawartość_Wody")
+ser_B_melted <- melt(ser_B, variable.name = "Tydzień", value.name = "Zawartość_Wody")
+
+# Połączenie danych
+ser_A_melted$Ser <- "A"
+ser_B_melted$Ser <- "B"
+dane_combined <- rbind(ser_A_melted, ser_B_melted)
+
+# Wykres pudełkowy
+ggplot(dane_combined, aes(x=Tydzień, y=Zawartość_Wody, fill=Ser)) +
+  geom_boxplot() +
+  labs(title="Zawartość Wody w Serze A i Serze B", x="Tydzień", y="Zawartość Wody (%)") +
+  theme_minimal()
+```
+
+\newpage
+
+### Wykres słupkowy \newline
+
+```{r}
+# Wykres słupkowy
+ggplot(dane_combined, aes(x=Tydzień, y=Zawartość_Wody, fill=Ser)) +
+  stat_summary(fun=mean, geom="bar", position="dodge") +
+  labs(title="Średnia Zawartość Wody w Serze A i Serze B", x="Tydzień", y="Średnia Zawartość Wody (%)") +
+  theme_minimal()
+```
+
+
+```{r, echo=FALSE}
+# 1. Przygotowanie danych
+
+# --- WERSJA POLSKA ---
+dane_pl <- dane_combined
+
+# --- WERSJA ANGIELSKA ---
+# Używamy trimws(), aby usunąć ewentualne niewidoczne spacje na końcu lub początku tekstu
+dane_en <- dane_combined %>%
+  mutate(Ser = trimws(Ser)) %>% 
+  mutate(Ser = case_when(
+    Ser == "Ser A" ~ "Cheese A",
+    Ser == "Ser B" ~ "Cheese B",
+    TRUE           ~ Ser
+  ))
+
+# 2. Funkcja do generowania wykresu (dodałem argument 'legend_title')
+generate_plot <- function(data, title, xlab, ylab, legend_title = "Ser") {
+  ggplot(data, aes(x = Tydzień, y = Zawartość_Wody, fill = Ser)) +
+    stat_summary(fun = mean, geom = "bar", position = "dodge") +
+    labs(title = title, x = xlab, y = ylab, fill = legend_title) + # 'fill' zmienia tytuł legendy
+    theme_minimal()
+}
+
+# 3. Generowanie i zapisywanie wykresu POLSKIEGO
+plot_pl <- generate_plot(dane_pl, 
+                         title = "Średnia Zawartość Wody w Serze A i Serze B", 
+                         xlab = "Tydzień", 
+                         ylab = "Średnia Zawartość Wody (%)",
+                         legend_title = "Rodzaj sera") # Polski tytuł legendy
+
+ggsave("assets/wykres_pl.png", plot = plot_pl, width = 8, height = 6, dpi = 300)
+
+# 4. Generowanie i zapisywanie wykresu ANGIELSKIEGO
+plot_en <- generate_plot(dane_en, 
+                         title = "Average Moisture Content in Cheese A and Cheese B", 
+                         xlab = "Week", 
+                         ylab = "Average Moisture Content (%)",
+                         legend_title = "Cheese Type") # Angielski tytuł legendy
+
+ggsave("assets/wykres_en.png", plot = plot_en, width = 8, height = 6, dpi = 300)
+```
+
+\newpage
+
+## Analiza Statystyczna \newline
+
+### 1. Czy przechowywanie sera „A” wpływa istotnie na zmniejszenie się w nim zawartości wody? \newline
+
+```{r}
+# Test U Manna-Whitneya dla sera A między Tygodniem 0 a 3
+test_mw_A_0_3 <- wilcox.test(ser_A$S0, ser_A$S3)
+test_mw_A_0_3
+
+# Test U Manna-Whitneya dla sera A między Tygodniem 3 a 5
+test_mw_A_3_5 <- wilcox.test(ser_A$S3, ser_A$S5)
+test_mw_A_3_5
+
+# Test U Manna-Whitneya dla sera A między Tygodniem 0 a 5
+test_mw_A_0_5 <- wilcox.test(ser_A$S0, ser_A$S5)
+test_mw_A_0_5
+```
+
+\newpage
+
+```{r}
+# Przekształcenie danych do formatu długiego
+ser_A_melted <- melt(ser_A, variable.name = "Tydzień", value.name = "Zawartość_Wody")
+ser_A_melted
+
+# Test Kruskala-Wallisa
+test_kw_A <- kruskal.test(Zawartość_Wody ~ Tydzień, data = ser_A_melted)
+test_kw_A
+```
+
+### 2. Czy przechowywanie sera „B” wpływa istotnie na zmniejszenie się w nim zawartości wody? \newline
+
+```{r}
+# Test U Manna-Whitneya dla sera B między Tygodniem 0 a 3
+test_mw_B_0_3 <- wilcox.test(ser_B$S0, ser_B$S3)
+test_mw_B_0_3
+```
+
+\newpage
+
+```{r}
+# Test U Manna-Whitneya dla sera B między Tygodniem 3 a 5
+test_mw_B_3_5 <- wilcox.test(ser_B$S3, ser_B$S5)
+test_mw_B_3_5
+
+# Test U Manna-Whitneya dla sera B między Tygodniem 0 a 5
+test_mw_B_0_5 <- wilcox.test(ser_B$S0, ser_B$S5)
+test_mw_B_0_5
+
+# Przekształcenie danych do formatu długiego
+ser_B_melted <- melt(ser_B, variable.name = "Tydzień", value.name = "Zawartość_Wody")
+ser_B_melted
+```
+
+\newpage
+
+```{r}
+# Test Kruskala-Wallisa
+test_kw_B <- kruskal.test(Zawartość_Wody ~ Tydzień, data = ser_B_melted)
+test_kw_B
+```
+
+### 3. Czy różnica w zawartości wody w terminach S0 i S3 jest istotna statystycznie? \newline
+
+```{r}
+# Test U Manna-Whitneya dla sera A i B między Tygodniem 3 a 5
+test_mw_0_3 <- wilcox.test(c(ser_A$S0, ser_B$S0), c(ser_A$S3, ser_B$S3))
+test_mw_0_3
+
+# Test U Manna-Whitneya dla sera A między Tygodniem 0 a Tygodniem 3
+test_mw_A_0_3 <- wilcox.test(ser_A$S0, ser_A$S3)
+print(test_mw_A_0_3)
+
+# Test U Manna-Whitneya dla sera B między Tygodniem 0 a Tygodniem 3
+test_mw_B_0_3 <- wilcox.test(ser_B$S0, ser_B$S3)
+print(test_mw_B_0_3)
+```
+
+\newpage
+
+```{r}
+# Tworzenie ramki danych z Tygodnia 0 i 3 dla obu serów
+dane_combined <- data.frame(
+  Ser = rep(c("Ser A", "Ser B"), each = length(ser_A$S0)),
+  Tydzień = rep(c("S0", "S3"), times = length(ser_A$S0)),
+  Zawartość_Wody = c(ser_A$S0, ser_A$S3, ser_B$S0, ser_B$S3)
+)
+
+# Wyświetlenie danych
+dane_combined
+
+# Test Kruskala-Wallisa
+test_kw <- kruskal.test(Zawartość_Wody ~ interaction(Ser, Tydzień), data = dane_combined)
+print(test_kw)
+```
+
+\newpage
+
+### 4. Czy różnica w zawartości wody w terminach S3 i S5 jest istotna statystycznie? \newline
+
+```{r}
+# Test U Manna-Whitneya dla sera A i B między Tygodniem 3 a 5
+test_mw_3_5 <- wilcox.test(c(ser_A$S3, ser_B$S3), c(ser_A$S5, ser_B$S5))
+test_mw_3_5
+
+# Test U Manna-Whitneya dla sera A między Tygodniem 3 a Tygodniem 5
+test_mw_A_3_5 <- wilcox.test(ser_A$S3, ser_A$S5)
+print(test_mw_A_3_5)
+
+# Test U Manna-Whitneya dla sera B między Tygodniem 3 a Tygodniem 5
+test_mw_B_3_5 <- wilcox.test(ser_B$S3, ser_B$S5)
+print(test_mw_B_3_5)
+```
+
+\newpage
+
+```{r}
+# Tworzenie ramki danych z Tygodnia 3 i 5 dla obu serów
+dane_combined <- data.frame(
+  Ser = rep(c("Ser A", "Ser B"), each = length(ser_A$S3)),
+  Tydzień = rep(c("S3", "S5"), times = length(ser_A$S3)),
+  Zawartość_Wody = c(ser_A$S3, ser_A$S5, ser_B$S3, ser_B$S5)
+)
+
+# Wyświetlenie danych
+dane_combined
+
+# Test Kruskala-Wallisa
+test_kw <- kruskal.test(Zawartość_Wody ~ interaction(Ser, Tydzień), data = dane_combined)
+print(test_kw)
+```
+
+\newpage
+
+### 5. Jakiego średniego procentu utraty wody można się spodziewać w terminach S3 i S5? \newline
+
+```{r average_water_loss}
+# Funkcja do obliczania procentu utraty wody
+calculate_loss <- function(data) {
+  mean_S0 <- mean(data$S0)
+  mean_S3 <- mean(data$S3)
+  mean_S5 <- mean(data$S5)
+  
+  loss_S0_S3 <- ((mean_S0 - mean_S3) / mean_S0) * 100
+  loss_S3_S5 <- ((mean_S3 - mean_S5) / mean_S0) * 100
+  loss_S0_S5 <- ((mean_S0 - mean_S5) / mean_S0) * 100
+  
+  return(c(loss_S0_S3, loss_S3_S5, loss_S0_S5))
+}
+
+# Obliczanie procentu utraty wody dla ser_A i ser_B
+loss_A <- calculate_loss(ser_A)
+loss_B <- calculate_loss(ser_B)
+
+# Obliczanie średniej utraty wody dla obu serów
+mean_S0_both <- mean(c(mean(ser_A$S0), mean(ser_B$S0)))
+mean_S3_both <- mean(c(mean(ser_A$S3), mean(ser_B$S3)))
+mean_S5_both <- mean(c(mean(ser_A$S5), mean(ser_B$S5)))
+
+loss_both <- c(
+  ((mean_S0_both - mean_S3_both) / mean_S0_both) * 100,
+  ((mean_S3_both - mean_S5_both) / mean_S0_both) * 100,
+  ((mean_S0_both - mean_S5_both) / mean_S0_both) * 100
+)
+
+# Tworzenie ramki danych z wynikami
+results <- data.frame(
+  Seria = c("Ser A", "Ser B", "Ser A i B"),
+  Utrata_S0_S3 = c(loss_A[1], loss_B[1], loss_both[1]),
+  Utrata_S3_S5 = c(loss_A[2], loss_B[2], loss_both[2]),
+  Utrata_S0_S5 = c(loss_A[3], loss_B[3], loss_both[3])
+)
+
+# Wyświetlenie wyników
+results
+```
+
+\newpage
+
+### 6. Czy istnieją statystycznie istotne różnice w utracie wilgotności pomiędzy serem "A" a serem "B" w analizowanych terminach? \newline
+
+```{r}
+# Obliczanie spadków wilgotności
+loss_A_S0_S3 <- ser_A$S0 - ser_A$S3
+loss_A_S3_S5 <- ser_A$S3 - ser_A$S5
+loss_A_S0_S5 <- ser_A$S0 - ser_A$S5
+loss_B_S0_S3 <- ser_B$S0 - ser_B$S3
+loss_B_S3_S5 <- ser_B$S3 - ser_B$S5
+loss_B_S0_S5 <- ser_B$S0 - ser_B$S5
+
+# Test U Manna-Whitneya dla spadków wilgotności
+test_result_S0_S3 <- wilcox.test(loss_A_S0_S3, loss_B_S0_S3)
+test_result_S3_S5 <- wilcox.test(loss_A_S3_S5, loss_B_S3_S5)
+test_result_S0_S5 <- wilcox.test(loss_A_S0_S5, loss_B_S0_S5)
+
+#Wynik testu U Manna-Whitneya dla spadków S0-S3
+test_result_S0_S3
+
+#Wynik testu U Manna-Whitneya dla spadków S3-S5
+test_result_S3_S5
+
+#Wynik testu U Manna-Whitneya dla spadków S0-S5
+test_result_S0_S5
+```
+
+\newpage
+
+## Podsumowanie i Wnioski \newline
+
+Analiza statystyki nieparametrycznej dotycząca zawartości wody w dwóch rodzajach serów w terminach S0, S3 i S5 ujawnia istotną tendencję spadkową. Różnice w zawartości wody są statystycznie istotne pomiędzy terminami S0 a S3, co potwierdzają wyniki testów U Manna-Whitneya (p \< 0,05). Z kolei test Kruskala-Wallisa badający interakcję rodzaju sera i terminu przechowywania wykazuje p-wartość na poziomie 0,0549, co sugeruje graniczną istotność (tendencję statystyczną) dla łącznego wpływu obu tych czynników na wilgotność próbek. Podobne wnioski można uzyskać poprzez analizę wykresu zawartości wody w odpowiednich terminach dla sera A i sera B, który ilustruje spadki wilgotności w analizowanych okresach.
+
+W całym okresie badawczym (S0-S5) średni względny spadek zawartości wody wynosi 11,44% dla sera A oraz 11,78% dla sera B (średnio 11,61% dla obu produktów łącznie). Największa utrata wilgoci obserwowana jest w pierwszym etapie (S0-S3), osiągając wartość 7,75% dla sera A oraz 6,65% dla sera B (średnio 7,21% dla obu produktów łącznie). W końcowym przedziale czasowym (S3-S5) można spodziewać się utraty na poziomie 3,68% dla sera A oraz 5,13% dla sera B (średnio 4,40% dla obu produktów łącznie).
+
+Wyniki testu U Manna-Whitneya jednoznacznie wskazują, że sery A i B nie różnią się istotnie pod względem dynamiki utraty wody. Świadczą o tym p-wartości dla wszystkich analizowanych okresów, które wynoszą odpowiednio: p = 0,6905 dla spadków S0-S3, p = 0,5476 dla S3-S5 oraz p = 0,7857 dla całego okresu przechowywania S0-S5. Wyniki te dowodzą istotnego wpływu czasu na obniżenie wilgotności serów, przy jednoczesnym braku różnic w tym procesie pomiędzy badanymi produktami. \newline
+
+### Wnioski końcowe w odniesieniu do celów: \newline
+
+1.  **Wpływ na ser A:** Przechowywanie sera „A” wpływa istotnie na zmniejszenie zawartości wody w czasie.
+2.  **Wpływ na ser B:** Przechowywanie sera „B” również wywołuje statystycznie istotne obniżenie wilgotności.
+3.  **Okres S0-S3:** Różnica w zawartości wody pomiędzy terminami S0 i S3 jest statystycznie istotna (p \< 0,05) – w tym czasie sery schną najszybciej (średni spadek o 7,21%).
+4.  **Okres S3-S5:** Różnica w zawartości wody pomiędzy S3 a S5 nie jest istotna statystycznie, co oznacza, że proces wysychania po 3. tygodniu wyraźnie hamuje.
+5.  **Oczekiwana utrata (S3-S5):** W terminach S3-S5 należy spodziewać się utraty wody na poziomie średnio 4,40% dla obu serów łącznie (3,68% dla sera A oraz 5,13% dla sera B).
+6.  **Porównanie produktów:** Nie istnieją statystycznie istotne różnice w dynamice utraty wilgotności pomiędzy serem „A” a serem „B” w żadnym z analizowanych okresów: S0-S3 (p = 0,6905), S3-S5 (p = 0,5476) oraz S0-S5 (p = 0,7857).

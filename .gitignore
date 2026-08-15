@@ -1,0 +1,20 @@
+# --- R Project Files ---
+# Nie wrzucaj historii komend (może zawierać wrażliwe dane!)
+.Rhistory
+# Nie wrzucaj stanu sesji (może być bardzo duży i spowolnić Git)
+.RData
+# Nie wrzucaj ustawień prywatnych RStudio
+.Rproj.user/
+
+# --- R Markdown Temporary Files ---
+# R Markdown tworzy te foldery podczas "Knitowania".
+# Są one tymczasowe i nie powinny być w repozytorium.
+*_files/
+*_cache/
+
+# --- System Files ---
+# Pliki systemowe macOS i Windows
+.DS_Store
+Thumbs.db
+
+*.html
